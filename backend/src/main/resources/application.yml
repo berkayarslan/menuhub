@@ -1,0 +1,32 @@
+server:
+  port: 8080
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/menuhub
+    username: menuhub
+    password: menuhub
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  jackson:
+    serialization:
+      indent-output: true
+
+app:
+  cors:
+    allowed-origins: http://localhost:3000
+  auth:
+    admin-username: admin
+    admin-password: admin123
+    jwt-secret: 12345678901234567890123456789012
+    jwt-expiration-ms: 86400000

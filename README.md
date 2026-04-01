@@ -8,9 +8,9 @@ Stack:
 - Queue: RabbitMQ
 - Object Storage: MinIO
 
-## Ã‡alÄ±ÅŸtÄ±rma
 
-### AltyapÄ±
+
+### Altyapi±
 docker compose up -d postgres redis rabbitmq minio
 
 ### Backend

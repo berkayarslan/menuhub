@@ -20,10 +20,13 @@ public class MenuSubmission {
     private Long restaurantId;
     private String sourceType;
 
+
     @Column(columnDefinition = "TEXT")
     private String rawText;
 
     private String status;
 
     private LocalDateTime createdAt;
+
+
 }

@@ -7,5 +7,6 @@ public record CreateSubmissionRequest(
                 @NotNull Long restaurantId,
                 @NotBlank String sourceType,
                 @NotBlank String rawText
+
 ) {
 }

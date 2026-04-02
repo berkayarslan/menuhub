@@ -11,6 +11,7 @@ type Submission = {
     rawText: string;
     status: string;
     createdAt?: string;
+    restaurantName?: string;
 };
 
 export default function AdminSubmissionsPage() {
@@ -89,7 +90,7 @@ export default function AdminSubmissionsPage() {
 
             {submissions.length === 0 ? (
                 <div className="card">
-                    <p>Henüz submission yok.</p>
+                    <p>Henüz bekleyen yok.</p>
                 </div>
             ) : (
                 submissions.map((submission) => (
@@ -98,6 +99,7 @@ export default function AdminSubmissionsPage() {
                             <div>
                                 <div style={{ fontSize: 22, fontWeight: 800 }}>Katkı #{submission.id}</div>
                                 <div style={{ color: "#94a3b8", marginTop: 6 }}>
+                                    {submission.restaurantName ? `Restoran ADI: ${submission.restaurantName} · ` : ""}
                                     Restaurant ID: {submission.restaurantId} · Kaynak: {submission.sourceType}
                                 </div>
                             </div>

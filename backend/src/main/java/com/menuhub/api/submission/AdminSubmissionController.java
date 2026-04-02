@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 @RestController
 @RequestMapping("/api/admin/submissions")
@@ -16,20 +17,23 @@ public class AdminSubmissionController {
     private final MenuSubmissionRepository submissionRepository;
     private final RestaurantRepository restaurantRepository;
     private final MenuItemRepository menuItemRepository;
+    private final AdminSubmissionService adminSubmissionService;
 
     public AdminSubmissionController(
                     MenuSubmissionRepository submissionRepository,
                     RestaurantRepository restaurantRepository,
-                    MenuItemRepository menuItemRepository
+                    MenuItemRepository menuItemRepository,
+                    AdminSubmissionService adminSubmissionService
     ) {
         this.submissionRepository = submissionRepository;
         this.restaurantRepository = restaurantRepository;
         this.menuItemRepository = menuItemRepository;
+        this.adminSubmissionService = adminSubmissionService;
     }
 
     @GetMapping
-    public List<MenuSubmission> list() {
-        return submissionRepository.findAllByOrderByIdDesc();
+    public List<AdminSubmissionListItem> list() {
+        return adminSubmissionService.listSubmissions();
     }
 
     @PostMapping("/{id}/approve")
@@ -68,7 +72,7 @@ public class AdminSubmissionController {
 
         return lines.stream()
                         .map(line -> toMenuItem(line, restaurant))
-                        .filter(item -> item != null)
+                        .filter(Objects::nonNull)
                         .toList();
     }
 
@@ -80,7 +84,8 @@ public class AdminSubmissionController {
             String name = parts[1].trim();
             String pricePart = parts[2].trim();
 
-            java.util.regex.Pattern pricePattern = java.util.regex.Pattern.compile("(\\d+[\\.,]?\\d*)\\s*([A-Za-z₺]+)?");
+            java.util.regex.Pattern pricePattern =
+                            java.util.regex.Pattern.compile("(\\d+[\\.,]?\\d*)\\s*([A-Za-z₺]+)?");
             java.util.regex.Matcher matcher = pricePattern.matcher(pricePart);
 
             if (!matcher.find()) {
@@ -88,7 +93,9 @@ public class AdminSubmissionController {
             }
 
             double price = Double.parseDouble(matcher.group(1).replace(",", "."));
-            String currency = matcher.group(2) != null ? matcher.group(2).replace("₺", "TRY").trim().toUpperCase() : "TRY";
+            String currency = matcher.group(2) != null
+                            ? matcher.group(2).replace("₺", "TRY").trim().toUpperCase()
+                            : "TRY";
 
             return MenuItem.builder()
                             .restaurant(restaurant)
@@ -102,7 +109,10 @@ public class AdminSubmissionController {
 
         String normalized = line.replace("₺", " TL").replace("TRY", " TL").trim();
 
-        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("^(.*?)(\\d+[\\.,]?\\d*)\\s*(TL)?$", java.util.regex.Pattern.CASE_INSENSITIVE);
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
+                        "^(.*?)(\\d+[\\.,]?\\d*)\\s*(TL)?$",
+                        java.util.regex.Pattern.CASE_INSENSITIVE
+        );
         java.util.regex.Matcher matcher = pattern.matcher(normalized);
 
         if (!matcher.find()) {

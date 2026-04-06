@@ -4,6 +4,7 @@ import com.menuhub.api.restaurant.Restaurant;
 import com.menuhub.api.restaurant.RestaurantRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,7 +26,14 @@ public class AdminSubmissionService {
     }
 
     public List<AdminSubmissionListItem> listSubmissions() {
-        List<MenuSubmission> submissions = submissionRepository.findAllByOrderByIdDesc();
+        List<MenuSubmission> submissions = submissionRepository.findAll().stream()
+                        .sorted(
+                                        Comparator
+                                                        .comparing((MenuSubmission s) -> !"PENDING_REVIEW".equals(s.getStatus()))
+                                                        .thenComparing(MenuSubmission::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                                                        .thenComparing(MenuSubmission::getId, Comparator.reverseOrder())
+                        )
+                        .toList();
 
         Set<Long> restaurantIds = submissions.stream()
                         .map(MenuSubmission::getRestaurantId)
@@ -39,10 +47,7 @@ public class AdminSubmissionService {
                         .map(submission -> new AdminSubmissionListItem(
                                         submission.getId(),
                                         submission.getRestaurantId(),
-                                        restaurantNameMap.getOrDefault(
-                                                        submission.getRestaurantId(),
-                                                        "Bilinmeyen Restoran"
-                                        ),
+                                        restaurantNameMap.getOrDefault(submission.getRestaurantId(), "Bilinmeyen Restoran"),
                                         submission.getSourceType(),
                                         submission.getRawText(),
                                         submission.getStatus(),

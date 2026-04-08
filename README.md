@@ -10,7 +10,7 @@ Stack:
 
 
 
-### Altyapi
+### initial
 docker compose up -d postgres redis rabbitmq minio
 
 ### Backend

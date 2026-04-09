@@ -41,17 +41,26 @@ public class AdminSubmissionController {
         MenuSubmission submission = submissionRepository.findById(id)
                         .orElseThrow(() -> new RuntimeException("Submission not found"));
 
-        if (!"PENDING_REVIEW".equals(submission.getStatus())) {
+        // If already approved, return as-is (idempotent)
+        if ("APPROVED".equals(submission.getStatus())) {
             return submission;
         }
 
         Restaurant restaurant = restaurantRepository.findById(submission.getRestaurantId())
                         .orElseThrow(() -> new RuntimeException("Restaurant not found"));
 
+        // If transitioning from REJECTED, delete old items first to prevent duplicates
+        if ("REJECTED".equals(submission.getStatus())) {
+            List<MenuItem> oldItems = menuItemRepository.findByRestaurantId(restaurant.getId());
+            menuItemRepository.deleteAll(oldItems);
+        }
+
         List<MenuItem> parsedItems = parseRawText(submission.getRawText(), restaurant);
         menuItemRepository.saveAll(parsedItems);
 
         submission.setStatus("APPROVED");
+        submission.setApprovedAt(java.time.LocalDateTime.now());
+        submission.setRejectedAt(null); // Clear rejected timestamp if re-approving
         return submissionRepository.save(submission);
     }
 
@@ -60,7 +69,14 @@ public class AdminSubmissionController {
         MenuSubmission submission = submissionRepository.findById(id)
                         .orElseThrow(() -> new RuntimeException("Submission not found"));
 
+        // If already rejected, return as-is (idempotent)
+        if ("REJECTED".equals(submission.getStatus())) {
+            return submission;
+        }
+
         submission.setStatus("REJECTED");
+        submission.setRejectedAt(java.time.LocalDateTime.now());
+        submission.setApprovedAt(null); // Clear approved timestamp if re-rejecting
         return submissionRepository.save(submission);
     }
 
@@ -97,6 +113,24 @@ public class AdminSubmissionController {
                             ? matcher.group(2).replace("₺", "TRY").trim().toUpperCase()
                             : "TRY";
 
+            // Check for duplicate (same restaurant + category + name)
+            var existingOpt = menuItemRepository.findByRestaurantIdAndCategoryAndName(
+                    restaurant.getId(),
+                    category,
+                    capitalize(name)
+            );
+
+            if (existingOpt.isPresent()) {
+                // UPDATE existing item
+                MenuItem existing = existingOpt.get();
+                existing.setPriceAmount(price);
+                existing.setCurrency(currency);
+                existing.setLastApprovedAt(java.time.LocalDateTime.now());
+                existing.setLastUpdatedBySubmissionId(null); // Will be set by caller
+                return existing;
+            }
+
+            // CREATE new item
             return MenuItem.builder()
                             .restaurant(restaurant)
                             .category(category.isBlank() ? "Diğer" : category)
@@ -125,6 +159,21 @@ public class AdminSubmissionController {
 
         if (name.isBlank()) {
             return null;
+        }
+
+        // Check for duplicate
+        var existingOpt = menuItemRepository.findByRestaurantIdAndCategoryAndName(
+                restaurant.getId(),
+                "Katkıdan eklendi",
+                capitalize(name)
+        );
+
+        if (existingOpt.isPresent()) {
+            MenuItem existing = existingOpt.get();
+            existing.setPriceAmount(price);
+            existing.setCurrency("TRY");
+            existing.setLastApprovedAt(java.time.LocalDateTime.now());
+            return existing;
         }
 
         return MenuItem.builder()

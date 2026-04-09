@@ -3,7 +3,12 @@ package com.menuhub.api.menu;
 import com.menuhub.api.restaurant.Restaurant;
 import com.menuhub.api.restaurant.RestaurantRepository;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin/restaurants/{restaurantId}/menu-items")
@@ -20,7 +25,10 @@ public class AdminMenuController {
     @PostMapping
     public MenuItem create(@PathVariable Long restaurantId, @Valid @RequestBody CreateMenuItemRequest request) {
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
-                        .orElseThrow(() -> new RuntimeException("Restaurant not found"));
+                        .orElseThrow(() -> new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Restaurant not found"
+                        ));
 
         MenuItem item = MenuItem.builder()
                         .restaurant(restaurant)
@@ -29,6 +37,7 @@ public class AdminMenuController {
                         .descriptionText(request.descriptionText())
                         .priceAmount(request.priceAmount())
                         .currency(request.currency())
+                        .createdAt(LocalDateTime.now())
                         .build();
 
         return menuItemRepository.save(item);
@@ -40,10 +49,16 @@ public class AdminMenuController {
                            @Valid @RequestBody UpdateMenuItemRequest request) {
 
         MenuItem item = menuItemRepository.findById(menuItemId)
-                        .orElseThrow(() -> new RuntimeException("Menu item not found"));
+                        .orElseThrow(() -> new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Menu item not found"
+                        ));
 
         if (item.getRestaurant() == null || !item.getRestaurant().getId().equals(restaurantId)) {
-            throw new RuntimeException("Menu item does not belong to restaurant");
+            throw new ResponseStatusException(
+                            HttpStatus.FORBIDDEN,
+                            "Menu item does not belong to restaurant"
+            );
         }
 
         item.setCategory(request.category());
@@ -51,6 +66,7 @@ public class AdminMenuController {
         item.setDescriptionText(request.descriptionText());
         item.setPriceAmount(request.priceAmount());
         item.setCurrency(request.currency());
+        item.setUpdatedAt(LocalDateTime.now());
 
         return menuItemRepository.save(item);
     }
@@ -58,12 +74,47 @@ public class AdminMenuController {
     @DeleteMapping("/{menuItemId}")
     public void delete(@PathVariable Long restaurantId, @PathVariable Long menuItemId) {
         MenuItem item = menuItemRepository.findById(menuItemId)
-                        .orElseThrow(() -> new RuntimeException("Menu item not found"));
+                        .orElseThrow(() -> new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Menu item not found"
+                        ));
 
         if (item.getRestaurant() == null || !item.getRestaurant().getId().equals(restaurantId)) {
-            throw new RuntimeException("Menu item does not belong to restaurant");
+            throw new ResponseStatusException(
+                            HttpStatus.FORBIDDEN,
+                            "Menu item does not belong to restaurant"
+            );
         }
 
         menuItemRepository.delete(item);
+    }
+
+    @GetMapping("/{menuItemId}/history")
+    public Object getItemHistory(@PathVariable Long restaurantId, @PathVariable Long menuItemId) {
+        MenuItem item = menuItemRepository.findById(menuItemId)
+                        .orElseThrow(() -> new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Menu item not found"
+                        ));
+
+        if (item.getRestaurant() == null || !item.getRestaurant().getId().equals(restaurantId)) {
+            throw new ResponseStatusException(
+                            HttpStatus.FORBIDDEN,
+                            "Menu item does not belong to restaurant"
+            );
+        }
+
+        return Map.of(
+                        "id", item.getId(),
+                        "name", item.getName(),
+                        "category", item.getCategory(),
+                        "price", item.getPriceAmount(),
+                        "currency", item.getCurrency(),
+                        "createdAt", item.getCreatedAt(),
+                        "createdBySubmissionId", item.getCreatedBySubmissionId(),
+                        "lastUpdatedAt", item.getUpdatedAt(),
+                        "lastUpdatedBySubmissionId", item.getLastUpdatedBySubmissionId(),
+                        "lastApprovedAt", item.getLastApprovedAt()
+        );
     }
 }

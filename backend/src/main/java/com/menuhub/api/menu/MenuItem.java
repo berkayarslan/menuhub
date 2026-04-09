@@ -26,6 +26,10 @@ public class MenuItem {
 
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private LocalDateTime lastApprovedAt;
+
+    private Long createdBySubmissionId;
+    private Long lastUpdatedBySubmissionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "restaurant_id")

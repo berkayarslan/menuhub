@@ -1,5 +1,6 @@
 package com.menuhub.api.submission;
 
+import com.menuhub.api.restaurant.RestaurantRepository;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +16,22 @@ import java.util.stream.Collectors;
 public class SubmissionController {
 
     private final MenuSubmissionRepository repository;
+    private final RestaurantRepository restaurantRepository;
 
-    public SubmissionController(MenuSubmissionRepository repository) {
+    public SubmissionController(MenuSubmissionRepository repository, RestaurantRepository restaurantRepository) {
         this.repository = repository;
+        this.restaurantRepository = restaurantRepository;
     }
 
     @PostMapping
     public MenuSubmission create(@Valid @RequestBody CreateSubmissionRequest request) {
+        // Validate restaurant exists
+        restaurantRepository.findById(request.restaurantId())
+                        .orElseThrow(() -> new ResponseStatusException(
+                                        HttpStatus.NOT_FOUND,
+                                        "Restaurant not found with id: " + request.restaurantId()
+                        ));
+
         String normalizedRawText = normalizeRawText(request);
 
         if (normalizedRawText.isBlank()) {

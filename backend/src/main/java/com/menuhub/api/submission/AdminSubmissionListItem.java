@@ -9,5 +9,7 @@ public record AdminSubmissionListItem(
                 String sourceType,
                 String rawText,
                 String status,
-                LocalDateTime createdAt
+                LocalDateTime createdAt,
+                LocalDateTime approvedAt,
+                LocalDateTime rejectedAt
 ) {}

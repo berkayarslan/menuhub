@@ -51,7 +51,9 @@ public class AdminSubmissionService {
                                         submission.getSourceType(),
                                         submission.getRawText(),
                                         submission.getStatus(),
-                                        submission.getCreatedAt()
+                                        submission.getCreatedAt(),
+                                        submission.getApprovedAt(),
+                                        submission.getRejectedAt()
                         ))
                         .toList();
     }

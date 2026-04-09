@@ -12,8 +12,7 @@ REST API for text-based restaurant menu & pricing discovery platform.
 
 ## Quick Start
 
-### 1. Start Infrastructure
-```bash
+### initial
 docker compose up -d postgres redis rabbitmq minio
 ```
 

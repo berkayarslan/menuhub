@@ -8,15 +8,14 @@ import java.util.List;
 @RequestMapping("/api/restaurants/{restaurantId}/menu-items")
 public class MenuController {
 
-    private final MenuItemRepository menuItemRepository;
+    private final MenuService menuService;
 
-    public MenuController(MenuItemRepository menuItemRepository) {
-        this.menuItemRepository = menuItemRepository;
+    public MenuController(MenuService menuService) {
+        this.menuService = menuService;
     }
 
     @GetMapping
     public List<MenuItem> list(@PathVariable Long restaurantId) {
-        List<MenuItem> items = menuItemRepository.findByRestaurantId(restaurantId);
-        return MenuOrderingUtil.sortMenuItems(items);
+        return menuService.listByRestaurant(restaurantId);
     }
 }

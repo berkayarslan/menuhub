@@ -1,4 +1,4 @@
-package com.menuhub.api.config;
+package com.menuhub.api.auth;
 
 import com.menuhub.api.auth.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;

@@ -8,42 +8,19 @@ import java.util.List;
 @RequestMapping("/api/restaurants")
 public class RestaurantController {
 
-    private final RestaurantRepository restaurantRepository;
+    private final RestaurantService restaurantService;
 
-    public RestaurantController(RestaurantRepository restaurantRepository) {
-        this.restaurantRepository = restaurantRepository;
+    public RestaurantController(RestaurantService restaurantService) {
+        this.restaurantService = restaurantService;
     }
 
     @GetMapping
     public List<Restaurant> list(@RequestParam(required = false) String q) {
-        List<Restaurant> restaurants = restaurantRepository.findAll();
-
-        List<Restaurant> visibleRestaurants = restaurants.stream()
-                        .filter(r -> !r.isDeleted())
-                        .toList();
-
-        if (q == null || q.isBlank()) {
-            return visibleRestaurants;
-        }
-
-        String query = q.toLowerCase();
-        return visibleRestaurants.stream()
-                        .filter(r ->
-                                                (r.getName() != null && r.getName().toLowerCase().contains(query)) ||
-                                                (r.getDistrict() != null && r.getDistrict().toLowerCase().contains(query))
-                        )
-                        .toList();
+        return restaurantService.listPublic(q);
     }
 
     @GetMapping("/{id}")
     public Restaurant detail(@PathVariable Long id) {
-        Restaurant restaurant = restaurantRepository.findById(id)
-                        .orElseThrow(() -> new RuntimeException("Restaurant not found"));
-
-        if (restaurant.isDeleted()) {
-            throw new RuntimeException("Restaurant not found");
-        }
-
-        return restaurant;
+        return restaurantService.detailPublic(id);
     }
 }
